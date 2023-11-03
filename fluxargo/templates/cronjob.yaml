@@ -1,0 +1,32 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: fluxargo-agent-upgrader
+  namespace: flux
+spec:
+  schedule: "0 */4 * * *"
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 20
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: fluxargo-agent-upgrader
+          containers:
+              - name: upgrader
+                image: harness/upgrader:latest
+                imagePullPolicy: Always
+                env:
+                  - name: POD_NAMESPACE
+                    valueFrom:
+                      fieldRef:
+                        fieldPath: metadata.namespace
+                volumeMounts:
+                  - name: config-volume
+                    mountPath: /etc/config
+          volumes:
+            - name: config-volume
+              configMap:
+                name: fluxargo-agent-upgrader
+          restartPolicy: Never
+---
